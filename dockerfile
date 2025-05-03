@@ -1,26 +1,23 @@
-# Etapa 1: Baixa MediaMTX oficial
+# Etapa 1: Baixa MediaMTX
 FROM bluenviron/mediamtx:latest AS mediamtx
 
-# Etapa 2: Prepara app Node
+# Etapa 2: App Node
 FROM node:18
 
 WORKDIR /app
 
-# Copia o código-fonte
 COPY . .
 
-# Instala dependências
 RUN npm install
 
-# Copia binário do MediaMTX
 COPY --from=mediamtx /mediamtx /usr/local/bin/mediamtx
-
-# Copia config
 COPY mediamtx.yml /app/mediamtx.yml
 
-# Expõe portas necessárias
+# Instala utilitário para aguardar porta
+RUN npm install -g wait-port
+
 EXPOSE 3001
 EXPOSE 8888
 
-# Roda MediaMTX e o backend
-CMD sh -c "mediamtx /app/mediamtx.yml & npm run dev"
+# Espera MediaMTX iniciar antes de rodar backend
+CMD sh -c "mediamtx /app/mediamtx.yml & wait-port localhost:8888 && npm run dev"
