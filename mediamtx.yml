@@ -108,6 +108,8 @@ apiTrustedProxies: []
 
 ###############################################
 # Global settings -> Metrics
+server:
+  https: yes
 
 # Enable Prometheus-compatible metrics.
 metrics: no
