@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "node --import=tsx --watch --env-file=.env ./src/server.ts"
+    "dev": "node --import=tsx --watch ./src/server.ts"
   },
   "keywords": [],
   "author": "",
