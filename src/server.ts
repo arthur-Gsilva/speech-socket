@@ -10,7 +10,7 @@ app.use(cors());
 const httpServer = createServer(app);
 
 app.use('/stream', createProxyMiddleware({
-  target: 'https://localhost:8888',
+  target: 'http://localhost:8888',
   changeOrigin: true,
   secure: false,
   pathRewrite: { '^/stream': '' },
