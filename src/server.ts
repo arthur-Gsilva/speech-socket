@@ -28,11 +28,13 @@ let activeCameraUrl: string | null = null;
 
 // 🔧 Função para ajustar as URLs dinamicamente
 function ajustarUrls(cameras: typeof cams, reqHost: string, protocol: string) {
+  const cleanHost = (reqHost as string).split(':')[0]; // remove a porta, se tiver
+
   return cameras.map((cam) => {
     const parsed = new URL(cam.url);
-    // força protocolo e host
     parsed.protocol = protocol + ':';
-    parsed.host = reqHost;
+    parsed.hostname = cleanHost;
+    parsed.port = ''; // remove qualquer porta
     return {
       ...cam,
       url: parsed.toString()
