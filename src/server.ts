@@ -14,7 +14,12 @@ app.use('/stream', createProxyMiddleware({
   changeOrigin: true,
   secure: false,
   pathRewrite: { '^/stream': '' },
-}));
+  onProxyRes: (proxyRes) => {
+    proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+    proxyRes.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS';
+    proxyRes.headers['Access-Control-Allow-Headers'] = '*';
+  }
+} as any));
 
 const io = new Server(httpServer, {
   cors: {
@@ -32,7 +37,7 @@ function ajustarUrls(cameras: typeof cams, reqHost: string, protocol: string) {
 
   return cameras.map((cam) => {
     const parsed = new URL(cam.url);
-    parsed.protocol = protocol + ':';
+    parsed.protocol = 'https';
     parsed.hostname = cleanHost;
     parsed.port = ''; // remove qualquer porta
     return {

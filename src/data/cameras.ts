@@ -19,7 +19,7 @@ export let cameras: Camera[] = [
     id: 3,
     keyword: 'BR-101',
     address: 'Avenida norte de brasil',
-    url: 'http://localhost:3001/stream/cam6/index.m3u8',
+    url: 'https://localhost:3001/stream/cam6/index.m3u8',
     inDropzone: false
   },
   {
