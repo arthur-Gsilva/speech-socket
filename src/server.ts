@@ -2,6 +2,8 @@ import express from "express";
 import { createServer } from "http";
 import { Server } from "socket.io";
 import cors from "cors";
+import { createProxyMiddleware } from "http-proxy-middleware";
+import { cameras } from "./data/cameras"; // lista inicial de câmeras
 
 const app = express();
 app.use(cors());
@@ -21,27 +23,44 @@ const io = new Server(httpServer, {
   },
 });
 
-import { cameras } from "./data/cameras"; // lista inicial de câmeras
-import { createProxyMiddleware } from "http-proxy-middleware";
-
 let cams = cameras;
 let selectedCams: typeof cameras = [];
-let activeCameraUrl: string | null = null; // <- adicionamos isso para o vídeo ativo!
+let activeCameraUrl: string | null = null;
+
+// 🔧 Função para ajustar as URLs dinamicamente
+function ajustarUrls(cameras: typeof cams, reqHost: string, protocol: string) {
+  return cameras.map((cam) => ({
+    ...cam,
+    url: cam.url.replace('http://localhost:3001', `${protocol}://${reqHost}`)
+  }));
+}
 
 io.on("connection", (socket) => {
   console.log("User connected", socket.id);
 
-  // Ao conectar, manda tudo pro usuário:
-  socket.emit("init-cameras", { cams, selectedCams, activeCameraUrl });
+  const req = socket.request as express.Request;
+  const host = req.headers.host || 'localhost:3001';
+  const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
 
-  // Quando move câmera entre as listas
+  const camsComUrlCorreta = ajustarUrls(cams, host, protocol);
+  const selectedComUrlCorreta = ajustarUrls(selectedCams, host, protocol);
+  const activeUrlCorrigida = activeCameraUrl?.replace('http://localhost:3001', `${protocol}://${host}`);
+
+  // Envia os dados com URLs ajustadas
+  socket.emit("init-cameras", {
+    cams: camsComUrlCorreta,
+    selectedCams: selectedComUrlCorreta,
+    activeCameraUrl: activeUrlCorrigida
+  });
+
+  // Atualizações de câmeras
   socket.on("move-camera", (data: { cams: typeof cameras; selectedCams: typeof cameras }) => {
     cams = data.cams;
     selectedCams = data.selectedCams;
     io.emit("update-cameras", { cams, selectedCams });
   });
 
-  // Quando muda a câmera ativa (vídeo sendo transmitido)
+  // Atualização de câmera ativa
   socket.on("change-camera", ({ url }: { url: string | null }) => {
     activeCameraUrl = url;
     io.emit("camera-updated", { url });
