@@ -12,6 +12,7 @@ const httpServer = createServer(app);
 app.use('/stream', createProxyMiddleware({
   target: 'http://localhost:8888',
   changeOrigin: true,
+  secure: false,
   pathRewrite: { '^/stream': '' },
 }));
 
