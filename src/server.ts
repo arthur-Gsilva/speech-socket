@@ -73,6 +73,10 @@ const camsComUrlCorreta = ajustarUrls(cams, host as string, protocol);
     io.emit("update-cameras", { cams, selectedCams });
   });
 
+  socket.on("request-cameras", () => {
+    socket.emit("init-cameras", { cams, selectedCams, activeCameraUrl });
+  });
+
   // Atualização de câmera ativa
   socket.on("change-camera", ({ url }: { url: string | null }) => {
     activeCameraUrl = url;
