@@ -39,7 +39,15 @@ export function setupSocket(httpServer: HTTPServer) {
     });
 
     socket.on("request-cameras", () => {
-      socket.emit("init-cameras", { cams, selectedCams, activeCameraUrl });
+        const camsCorrigidas = ajustarUrls(cams, host as string, protocol);
+        const selectedCorrigidas = ajustarUrls(selectedCams, host as string, protocol);
+        const activeCorrigida = activeCameraUrl?.replace('http://localhost:3001', `${protocol}://${host}`);
+
+        socket.emit("init-cameras", {
+            cams: camsCorrigidas,
+            selectedCams: selectedCorrigidas,
+            activeCameraUrl: activeCorrigida
+        });
     });
 
     socket.on("change-camera", ({ url }) => {
