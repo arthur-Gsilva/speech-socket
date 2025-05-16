@@ -1,105 +1,105 @@
+import { createServer } from "http";
+import app from "./app";
+import { setupSocket } from "./socket";
+
+const httpServer = createServer(app);
+setupSocket(httpServer);
+
+const PORT = 3001;
+httpServer.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});
+
+// import express from "express";
 // import { createServer } from "http";
-// import app from "./app";
-// import { setupSocket } from "./socket";
+// import { Server } from "socket.io";
+// import cors from "cors";
+// import { createProxyMiddleware } from "http-proxy-middleware";
+// import { cameras } from "./data/cameras"; // lista inicial de câmeras
 
+// const app = express();
+// app.use(cors());
 // const httpServer = createServer(app);
-// setupSocket(httpServer);
 
-// const PORT = 3001;
-// httpServer.listen(PORT, () => {
-//   console.log(`Server running on http://localhost:${PORT}`);
+// app.use('/stream', createProxyMiddleware({
+//   target: 'http://localhost:8888',
+//   changeOrigin: true,
+//   secure: false,
+//   pathRewrite: { '^/stream': '' },
+//   onProxyRes: (proxyRes) => {
+//     proxyRes.headers['Access-Control-Allow-Origin'] = '*';
+//     proxyRes.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS';
+//     proxyRes.headers['Access-Control-Allow-Headers'] = '*';
+//   }
+// } as any));
+
+// const io = new Server(httpServer, {
+//   cors: {
+//     origin: "*",
+//   },
 // });
 
-import express from "express";
-import { createServer } from "http";
-import { Server } from "socket.io";
-import cors from "cors";
-import { createProxyMiddleware } from "http-proxy-middleware";
-import { cameras } from "./data/cameras"; // lista inicial de câmeras
+// let cams = cameras;
+// let selectedCams: typeof cameras = [];
+// let activeCameraUrl: string | null = null;
 
-const app = express();
-app.use(cors());
-const httpServer = createServer(app);
+// // 🔧 Função para ajustar as URLs dinamicamente
+// function ajustarUrls(cameras: typeof cams, reqHost: string, protocol: string) {
+//   const cleanHost = (reqHost as string).split(':')[0]; // remove a porta, se tiver
 
-app.use('/stream', createProxyMiddleware({
-  target: 'http://localhost:8888',
-  changeOrigin: true,
-  secure: false,
-  pathRewrite: { '^/stream': '' },
-  onProxyRes: (proxyRes) => {
-    proxyRes.headers['Access-Control-Allow-Origin'] = '*';
-    proxyRes.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS';
-    proxyRes.headers['Access-Control-Allow-Headers'] = '*';
-  }
-} as any));
+//   return cameras.map((cam) => {
+//     const parsed = new URL(cam.url);
+//     parsed.protocol = 'https';
+//     parsed.hostname = cleanHost;
+//     parsed.port = ''; // remove qualquer porta
+//     return {
+//       ...cam,
+//       url: parsed.toString()
+//     };
+//   });
+// }
 
-const io = new Server(httpServer, {
-  cors: {
-    origin: "*",
-  },
-});
+// io.on("connection", (socket) => {
+//   console.log("User connected", socket.id);
 
-let cams = cameras;
-let selectedCams: typeof cameras = [];
-let activeCameraUrl: string | null = null;
-
-// 🔧 Função para ajustar as URLs dinamicamente
-function ajustarUrls(cameras: typeof cams, reqHost: string, protocol: string) {
-  const cleanHost = (reqHost as string).split(':')[0]; // remove a porta, se tiver
-
-  return cameras.map((cam) => {
-    const parsed = new URL(cam.url);
-    parsed.protocol = 'https';
-    parsed.hostname = cleanHost;
-    parsed.port = ''; // remove qualquer porta
-    return {
-      ...cam,
-      url: parsed.toString()
-    };
-  });
-}
-
-io.on("connection", (socket) => {
-  console.log("User connected", socket.id);
-
-    const req = socket.request as express.Request;
-    const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3001';
-    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+//     const req = socket.request as express.Request;
+//     const host = req.headers['x-forwarded-host'] || req.headers.host || 'localhost:3001';
+//     const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
 
   
-    const camsComUrlCorreta = ajustarUrls(cams, host as string, protocol);
-    const selectedComUrlCorreta = ajustarUrls(selectedCams, host as string, protocol);
-    const activeUrlCorrigida = activeCameraUrl?.replace('http://localhost:3001', `${protocol}://${host}`);
+//     const camsComUrlCorreta = ajustarUrls(cams, host as string, protocol);
+//     const selectedComUrlCorreta = ajustarUrls(selectedCams, host as string, protocol);
+//     const activeUrlCorrigida = activeCameraUrl?.replace('http://localhost:3001', `${protocol}://${host}`);
 
-  // Envia os dados com URLs ajustadas
-  socket.emit("init-cameras", {
-    cams: camsComUrlCorreta,
-    selectedCams: selectedComUrlCorreta,
-    activeCameraUrl: activeUrlCorrigida
-  });
+//   // Envia os dados com URLs ajustadas
+//   socket.emit("init-cameras", {
+//     cams: camsComUrlCorreta,
+//     selectedCams: selectedComUrlCorreta,
+//     activeCameraUrl: activeUrlCorrigida
+//   });
 
-  // Atualizações de câmeras
-  socket.on("move-camera", (data: { cams: typeof cameras; selectedCams: typeof cameras }) => {
-    cams = data.cams;
-    selectedCams = data.selectedCams;
-    io.emit("update-cameras", { cams, selectedCams });
-  });
+//   // Atualizações de câmeras
+//   socket.on("move-camera", (data: { cams: typeof cameras; selectedCams: typeof cameras }) => {
+//     cams = data.cams;
+//     selectedCams = data.selectedCams;
+//     io.emit("update-cameras", { cams, selectedCams });
+//   });
 
-  socket.on("request-cameras", () => {
-    socket.emit("init-cameras", { cams, selectedCams, activeCameraUrl });
-  });
+//   socket.on("request-cameras", () => {
+//     socket.emit("init-cameras", { cams, selectedCams, activeCameraUrl });
+//   });
 
-  // Atualização de câmera ativa
-  socket.on("change-camera", ({ url }: { url: string | null }) => {
-    activeCameraUrl = url;
-    io.emit("camera-updated", { url });
-  });
+//   // Atualização de câmera ativa
+//   socket.on("change-camera", ({ url }: { url: string | null }) => {
+//     activeCameraUrl = url;
+//     io.emit("camera-updated", { url });
+//   });
 
-  socket.on("disconnect", () => {
-    console.log("User disconnected", socket.id);
-  });
-});
+//   socket.on("disconnect", () => {
+//     console.log("User disconnected", socket.id);
+//   });
+// });
 
-httpServer.listen(3001, () => {
-  console.log("Server running on http://localhost:3001");
-});
+// httpServer.listen(3001, () => {
+//   console.log("Server running on http://localhost:3001");
+// });
